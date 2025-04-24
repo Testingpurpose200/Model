@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Image Classifier</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 40px;
+    }
+    img {
+      max-width: 300px;
+      margin-top: 20px;
+    }
+    #output {
+      margin-top: 20px;
+      font-size: 1.2em;
+      color: #333;
+    }
+    #loading {
+      display: none;
+      font-size: 1.5em;
+      color: #007bff;
+    }
+  </style>
+</head>
+<body>
+  <h1>Upload or Capture an Image</h1>
+  <input type="file" id="imageInput" accept="image/*" capture="environment"><br><br>
+  <button onclick="predict()">Predict</button><br>
+
+  <img id="preview" src="#" alt="Image Preview" style="display:none;"><br>
+  <p id="output">Prediction will appear here...</p>
+  <p id="loading">Loading...</p> <!-- Loading indicator added -->
+
+  <script>
+    const imageInput = document.getElementById("imageInput");
+    const preview = document.getElementById("preview");
+
+    imageInput.addEventListener("change", () => {
+      const file = imageInput.files[0];
+      if (file) {
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = "block";
+      }
+    });
+
+    function predict() {
+      const file = imageInput.files[0];
+      if (!file) {
+        alert("Please select or capture an image first.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      // Show loading indicator and hide output until prediction is complete
+      document.getElementById("loading").style.display = "block";
+      document.getElementById("output").style.display = "none";
+
+      fetch("/predict", {
+        method: "POST",
+        body: formData
+      })
+      .then(res => {
+        if (!res.ok) throw new Error("Server returned " + res.status);
+        return res.json();
+      })
+      .then(data => {
+        document.getElementById("loading").style.display = "none"; // Hide loading
+        document.getElementById("output").style.display = "block"; // Show output
+        document.getElementById("output").innerHTML = `
+          Prediction: <strong>${data.prediction}</strong><br>
+          Confidence: <strong>${(data.confidence * 100).toFixed(2)}%</strong>
+        `;
+      })
+      .catch(err => {
+        console.error("Error:", err);
+        document.getElementById("loading").style.display = "none"; // Hide loading
+        document.getElementById("output").style.display = "block"; // Show output
+        document.getElementById("output").innerText = "Prediction failed.";
+      });
+    }
+  </script>
+</body>
+</html>
