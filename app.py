@@ -39,7 +39,7 @@ class CustomDepthwiseConv2D(DepthwiseConv2D):
         super().__init__(*args, **kwargs)
 
 # Load the model
-MODEL_PATH = "model/model.h5"
+MODEL_PATH = "Model/model.h5"
 model = tf.keras.models.load_model(
     MODEL_PATH,
     custom_objects={
