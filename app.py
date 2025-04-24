@@ -8,6 +8,7 @@ from flask_cors import CORS
 import tensorflow.keras.backend as K
 from keras.layers import DepthwiseConv2D
 import logging
+import os
 
 # 👇 This disables all GPUs and forces CPU usage
 tf.config.set_visible_devices([], 'GPU')
@@ -16,7 +17,7 @@ tf.config.set_visible_devices([], 'GPU')
 logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
-app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 5MB limit
+app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10MB limit
 CORS(app)
 
 # Allowed image extensions
@@ -38,8 +39,16 @@ class CustomDepthwiseConv2D(DepthwiseConv2D):
         kwargs.pop('groups', None)
         super().__init__(*args, **kwargs)
 
+# Dynamically get the absolute path for model
+MODEL_PATH = os.path.join(os.getcwd(), "Model", "model.h5")
+logging.debug(f"Loading model from: {MODEL_PATH}")
+
+# Check if the model exists at the specified path
+if not os.path.exists(MODEL_PATH):
+    logging.error(f"Model file not found at {MODEL_PATH}")
+    raise FileNotFoundError(f"Model file not found at {MODEL_PATH}")
+
 # Load the model
-MODEL_PATH = "Model/model.h5"
 model = tf.keras.models.load_model(
     MODEL_PATH,
     custom_objects={
@@ -111,4 +120,4 @@ import os
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))  # Render uses the PORT environment variable
-    app.run(debug=True, host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=port)
